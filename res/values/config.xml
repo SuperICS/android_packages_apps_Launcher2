@@ -7,7 +7,7 @@
 
 <!-- AllApps/Customize/AppsCustomize -->
     <!-- Which default transition effect to use on the AppsCustomize -->
-    <string name="config_drawerDefaultTransitionEffect">Stack</string>
+    <string name="config_drawerDefaultTransitionEffect">CubeIn</string>
     <!-- The alpha of the AppsCustomize bg in spring loaded mode -->
     <integer name="config_appsCustomizeSpringLoadedBgAlpha">45</integer>
     <!-- Fade in/out duration of icons being dragged from the trays -->
@@ -48,7 +48,7 @@
     <!-- Whether or not the drop targets drop down as opposed to fade in -->
     <bool name="config_useDropTargetDownTransition">true</bool>
     <!-- Which default transition effect to use on the workspace -->
-    <string name="config_workspaceDefaultTransitionEffect">Standard</string>
+    <string name="config_workspaceDefaultTransitionEffect">RotateUp</string>
     <!-- Whether to fade the adjacent screens when scrolling -->
     <bool name="config_workspaceDefualtFadeInAdjacentScreens">false</bool>
 
