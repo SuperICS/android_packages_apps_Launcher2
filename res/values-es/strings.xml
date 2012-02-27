@@ -94,6 +94,8 @@
     <string name="all_apps_cling_add_item" msgid="5665035103260318891">"Para añadir una aplicación al escritorio, solo tienes que mantenerla pulsada."</string>
     <string name="all_apps_sort_cling_title">Ordene sus aplicaciones</string>
     <string name="all_apps_sort_cling_add_item">Toque y sostenga la pestaña de aplicaciones para ordenarlas</string>
+    <string name="menu_apps_sort_title">Nombre</string>
+    <string name="menu_apps_sort_install_date">Fecha de instalación</string>
     <string name="folder_cling_title" msgid="4308949882377840953">"Organiza tus aplicaciones en carpetas"</string>
     <string name="folder_cling_move_item" msgid="270598675060435169">"Para mover una aplicación, solo tienes que mantenerla pulsada."</string>
     <string name="folder_cling_create_folder" msgid="8352867485656129478">"Para crear una carpeta nueva en el escritorio, coloca una aplicación encima de otra."</string>
