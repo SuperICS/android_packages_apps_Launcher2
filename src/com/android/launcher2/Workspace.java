@@ -258,8 +258,11 @@ public class Workspace extends PagedView
     // Preferences
     private int mNumberHomescreens;
     private int mDefaultHomescreen;
+    private int mScreenPaddingVertical;
+    private int mScreenPaddingHorizontal;
     private boolean mShowSearchBar;
     private boolean mResizeAnyWidget;
+    private boolean mHideIconLabels;
     private boolean mScrollWallpaper;
     private boolean mShowScrollingIndicator;
     private boolean mFadeScrollingIndicator;
@@ -303,26 +306,9 @@ public class Workspace extends PagedView
 
         final Resources res = context.getResources();
         if (LauncherApplication.isScreenLarge()) {
-            // Determine number of rows/columns dynamically
-            // TODO: This code currently fails on tablets with an aspect ratio < 1.3.
-            // Around that ratio we should make cells the same size in portrait and
-            // landscape
-            TypedArray actionBarSizeTypedArray =
-                context.obtainStyledAttributes(new int[] { android.R.attr.actionBarSize });
-            final float actionBarHeight = actionBarSizeTypedArray.getDimension(0, 0f);
-            final float systemBarHeight = res.getDimension(R.dimen.status_bar_height);
-            final float smallestScreenDim = res.getConfiguration().smallestScreenWidthDp;
-
-            cellCountX = 1;
-            while (CellLayout.widthInPortrait(res, cellCountX + 1) <= smallestScreenDim) {
-                cellCountX++;
-            }
-
-            cellCountY = 1;
-            while (actionBarHeight + CellLayout.heightInLandscape(res, cellCountY + 1)
-                <= smallestScreenDim - systemBarHeight) {
-                cellCountY++;
-            }
+            int[] cellCount = getCellCountsForLarge(context);
+            cellCountX = cellCount[0];
+            cellCountY = cellCount[1];
         }
 
         mSpringLoadedShrinkFactor =
@@ -334,6 +320,12 @@ public class Workspace extends PagedView
         cellCountY = a.getInt(R.styleable.Workspace_cellCountY, cellCountY);
         a.recycle();
 
+        // if there is a value set it the preferences, use that instead
+        if (!LauncherApplication.isScreenLarge()) {
+            cellCountX = PreferencesProvider.Interface.Homescreen.getCellCountX(context, cellCountX);
+            cellCountY = PreferencesProvider.Interface.Homescreen.getCellCountY(context, cellCountY);
+        }
+
         LauncherModel.updateWorkspaceLayoutCells(cellCountX, cellCountY);
         setHapticFeedbackEnabled(false);
 
@@ -344,8 +336,11 @@ public class Workspace extends PagedView
         if (mDefaultHomescreen >= mNumberHomescreens) {
             mDefaultHomescreen = mNumberHomescreens / 2;
         }
+        mScreenPaddingVertical = PreferencesProvider.Interface.Homescreen.getScreenPaddingVertical(context);
+        mScreenPaddingHorizontal = PreferencesProvider.Interface.Homescreen.getScreenPaddingHorizontal(context);
         mShowSearchBar = PreferencesProvider.Interface.Homescreen.getShowSearchBar(context);
         mResizeAnyWidget = PreferencesProvider.Interface.Homescreen.getResizeAnyWidget(context);
+        mHideIconLabels = PreferencesProvider.Interface.Homescreen.getHideIconLabels(context);
         mScrollWallpaper = PreferencesProvider.Interface.Homescreen.Scrolling.getScrollWallpaper(context);
         mTransitionEffect = PreferencesProvider.Interface.Homescreen.Scrolling.getTransitionEffect(context,
                 res.getString(R.string.config_workspaceDefaultTransitionEffect));
@@ -360,6 +355,33 @@ public class Workspace extends PagedView
 
         // Disable multitouch across the workspace/all apps/customize tray
         setMotionEventSplittingEnabled(true);
+    }
+
+    public static int[] getCellCountsForLarge(Context context) {
+        int[] cellCount = new int[2];
+
+        final Resources res = context.getResources();
+        // Determine number of rows/columns dynamically
+        // TODO: This code currently fails on tablets with an aspect ratio < 1.3.
+        // Around that ratio we should make cells the same size in portrait and
+        // landscape
+        TypedArray actionBarSizeTypedArray =
+            context.obtainStyledAttributes(new int[] { android.R.attr.actionBarSize });
+        final float actionBarHeight = actionBarSizeTypedArray.getDimension(0, 0f);
+        final float systemBarHeight = res.getDimension(R.dimen.status_bar_height);
+        final float smallestScreenDim = res.getConfiguration().smallestScreenWidthDp;
+
+        cellCount[0] = 1;
+        while (CellLayout.widthInPortrait(res, cellCount[0] + 1) <= smallestScreenDim) {
+            cellCount[0]++;
+        }
+
+        cellCount[1] = 1;
+        while (actionBarHeight + CellLayout.heightInLandscape(res, cellCount[1] + 1)
+                <= smallestScreenDim - systemBarHeight) {
+            cellCount[1]++;
+        }
+        return cellCount;
     }
 
     // estimate the size of a widget with spans hSpan, vSpan. return MAX_VALUE for each
@@ -447,8 +469,12 @@ public class Workspace extends PagedView
         LayoutInflater inflater =
                 (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         for (int i = 0; i < mNumberHomescreens; i++) {
-            inflater.inflate(R.layout.workspace_screen, this);
-        }
+            View screen = inflater.inflate(R.layout.workspace_screen, null);
+            screen.setPadding(screen.getPaddingLeft() + mScreenPaddingHorizontal,
+                    screen.getPaddingTop() + mScreenPaddingVertical,
+                    screen.getPaddingRight() + mScreenPaddingHorizontal,
+                    screen.getPaddingBottom() + mScreenPaddingVertical);
+            addView(screen);        }
 
         try {
             mBackground = res.getDrawable(R.drawable.apps_customize_bg);
@@ -571,9 +597,13 @@ public class Workspace extends PagedView
             layout = mLauncher.getHotseat().getLayout();
             child.setOnKeyListener(null);
 
-            // Hide folder title in the hotseat
-            if (child instanceof FolderIcon) {
-                ((FolderIcon) child).setTextVisible(false);
+            if (!mHideIconLabels) {
+                // Hide titles in the hotseat
+                if (child instanceof FolderIcon) {
+                    ((FolderIcon) child).setTextVisible(false);
+                } else if (child instanceof BubbleTextView) {
+                    ((BubbleTextView) child).setTextVisible(false);
+                }
             }
 
             if (screen < 0) {
@@ -585,9 +615,13 @@ public class Workspace extends PagedView
                 y = mLauncher.getHotseat().getCellYFromOrder(screen);
             }
         } else {
-            // Show folder title if not in the hotseat
-            if (child instanceof FolderIcon) {
-                ((FolderIcon) child).setTextVisible(true);
+            if (!mHideIconLabels) {
+                // Show titles if not in the hotseat
+                if (child instanceof FolderIcon) {
+                    ((FolderIcon) child).setTextVisible(true);
+                } else if (child instanceof BubbleTextView) {
+                    ((BubbleTextView) child).setTextVisible(true);
+                }
             }
 
             layout = (CellLayout) getPageAt(screen);
@@ -911,8 +945,7 @@ public class Workspace extends PagedView
         return offset;
     }
     private void syncWallpaperOffsetWithScroll() {
-        final boolean enableWallpaperEffects = isHardwareAccelerated();
-        if (enableWallpaperEffects) {
+        if (mScrollWallpaper) {
             mWallpaperOffset.setFinalX(wallpaperOffsetForCurrentScroll());
         }
     }
@@ -2024,7 +2057,7 @@ public class Workspace extends PagedView
                     invalidate();
                     for (int i = 0; i < getChildCount(); i++) {
                         final CellLayout cl = (CellLayout) getPageAt(i);
-                        cl.fastInvalidate();
+                        cl.invalidate();
                         cl.setFastTranslationX(a * mOldTranslationXs[i] + b * mNewTranslationXs[i]);
                         cl.setFastTranslationY(a * mOldTranslationYs[i] + b * mNewTranslationYs[i]);
                         cl.setFastScaleX(a * mOldScaleXs[i] + b * mNewScaleXs[i]);
@@ -2034,6 +2067,7 @@ public class Workspace extends PagedView
                         cl.setBackgroundAlphaMultiplier(a * mOldBackgroundAlphaMultipliers[i] +
                                 b * mNewBackgroundAlphaMultipliers[i]);
                         cl.setFastAlpha(a * mOldAlphas[i] + b * mNewAlphas[i]);
+                        cl.invalidate();
                     }
                     syncChildrenLayersEnabledOnVisiblePages();
                 }
@@ -2100,11 +2134,13 @@ public class Workspace extends PagedView
             d.draw(destCanvas);
         } else {
             if (v instanceof FolderIcon) {
-                // For FolderIcons the text can bleed into the icon area, and so we need to
-                // hide the text completely (which can't be achieved by clipping).
-                if (((FolderIcon) v).getTextVisible()) {
-                    ((FolderIcon) v).setTextVisible(false);
-                    textVisible = true;
+                if (!mHideIconLabels) {
+                    // For FolderIcons the text can bleed into the icon area, and so we need to
+                    // hide the text completely (which can't be achieved by clipping).
+                    if (((FolderIcon) v).getTextVisible()) {
+                        ((FolderIcon) v).setTextVisible(false);
+                        textVisible = true;
+                    }
                 }
             } else if (v instanceof BubbleTextView) {
                 final BubbleTextView tv = (BubbleTextView) v;
@@ -2120,7 +2156,7 @@ public class Workspace extends PagedView
             v.draw(destCanvas);
 
             // Restore text visibility of FolderIcon if necessary
-            if (textVisible) {
+            if (!mHideIconLabels && textVisible) {
                 ((FolderIcon) v).setTextVisible(true);
             }
         }
@@ -3313,6 +3349,9 @@ public class Workspace extends PagedView
             case LauncherSettings.Favorites.ITEM_TYPE_FOLDER:
                 view = FolderIcon.fromXml(R.layout.folder_icon, mLauncher, cellLayout,
                         (FolderInfo) info, mIconCache);
+                if (mHideIconLabels) {
+                    ((FolderIcon) view).setTextVisible(false);
+                }
                 break;
             default:
                 throw new IllegalStateException("Unknown item type: " + info.itemType);

@@ -35,6 +35,29 @@
                     launcher:maxExternal="ui_homescreen_screens"
                     launcher:max="7"
                     launcher:min="1" />
+                <com.android.launcher2.preference.DoubleNumberPickerPreference android:key="ui_homescreen_grid"
+                    android:title="@string/preferences_interface_homescreen_general_grid_title"
+                    android:summary="@string/preferences_interface_homescreen_general_grid_summary"
+                    launcher:pickerTitle1="@string/preferences_interface_homescreen_general_grid_rows_title"
+                    launcher:pickerTitle2="@string/preferences_interface_homescreen_general_grid_columns_title"
+                    launcher:defaultValue1="4"
+                    launcher:defaultValue2="4"
+                    launcher:max1="7"
+                    launcher:min1="3"
+                    launcher:max2="7"
+                    launcher:min2="3" />
+                <com.android.launcher2.preference.NumberPickerPreference android:key="ui_homescreen_screen_padding_vertical"
+                    android:title="@string/preferences_interface_homescreen_general_screen_padding_vertical_title"
+                    android:summary="@string/preferences_interface_homescreen_general_screen_padding_vertical_summary"
+                    android:defaultValue="0"
+                    launcher:max="10"
+                    launcher:min="0" />
+                <com.android.launcher2.preference.NumberPickerPreference android:key="ui_homescreen_screen_padding_horizontal"
+                    android:title="@string/preferences_interface_homescreen_general_screen_padding_horizontal_title"
+                    android:summary="@string/preferences_interface_homescreen_general_screen_padding_horizontal_summary"
+                    android:defaultValue="0"
+                    launcher:max="10"
+                    launcher:min="0" />
                 <CheckBoxPreference android:key="ui_homescreen_general_search"
                     android:title="@string/preferences_interface_homescreen_general_search_title"
                     android:summary="@string/preferences_interface_homescreen_general_search_summary"
@@ -42,6 +65,9 @@
                 <CheckBoxPreference android:key="ui_homescreen_general_resize_any_widget"
                     android:title="@string/preferences_interface_homescreen_general_resize_any_widget_title"
                     android:summary="@string/preferences_interface_homescreen_general_resize_any_widget_summary" />
+                <CheckBoxPreference android:key="ui_homescreen_general_hide_icon_labels"
+                    android:title="@string/preferences_interface_homescreen_general_hide_icon_labels_title"
+                    android:summary="@string/preferences_interface_homescreen_general_hide_icon_labels_summary" />
             </PreferenceCategory>
             <PreferenceCategory android:title="@string/preferences_interface_homescreen_scrolling_category">
                 <ListPreference android:key="ui_homescreen_scrolling_transition_effect"
@@ -59,7 +85,8 @@
                     android:summary="@string/preferences_interface_homescreen_scrolling_scroll_wallpaper_summary"
                     android:defaultValue="true" />
             </PreferenceCategory>
-            <PreferenceCategory android:title="@string/preferences_interface_homescreen_indicator_category">
+            <PreferenceCategory android:key="ui_homescreen_indicator"
+                android:title="@string/preferences_interface_homescreen_indicator_category">
                 <CheckBoxPreference android:key="ui_homescreen_indicator_enable"
                     android:title="@string/preferences_interface_homescreen_indicator_enable_title"
                     android:summary="@string/preferences_interface_homescreen_indicator_enable_summary"
@@ -96,7 +123,8 @@
                     android:title="@string/preferences_interface_drawer_scrolling_fade_adjacent_screens_title"
                     android:summary="@string/preferences_interface_drawer_scrolling_fade_adjacent_screens_summary" />
             </PreferenceCategory>
-            <PreferenceCategory android:title="@string/preferences_interface_drawer_indicator_category">
+            <PreferenceCategory android:key="ui_drawer_indicator"
+                android:title="@string/preferences_interface_drawer_indicator_category">
                 <CheckBoxPreference android:key="ui_drawer_indicator_enable"
                     android:title="@string/preferences_interface_drawer_indicator_enable_title"
                     android:summary="@string/preferences_interface_drawer_indicator_enable_summary"
@@ -110,16 +138,16 @@
         </PreferenceScreen>
 
         <!-- Dock -->
-        <PreferenceScreen android:key="ui_dock"
+        <!-- <PreferenceScreen android:key="ui_dock"
             android:title="@string/preferences_interface_dock_title">
 
-        </PreferenceScreen>
+        </PreferenceScreen> -->
 
         <!-- Icons -->
-        <PreferenceScreen android:key="ui_icons"
+        <!-- <PreferenceScreen android:key="ui_icons"
             android:title="@string/preferences_interface_icons_title">
 
-        </PreferenceScreen>
+        </PreferenceScreen> -->
 
         <!-- General -->
         <PreferenceScreen android:key="ui_general"

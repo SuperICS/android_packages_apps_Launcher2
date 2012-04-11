@@ -260,6 +260,7 @@ public final class Launcher extends Activity
     // Preferences
     private boolean mShowSearchBar;
     private boolean mShowDockDivider;
+    private boolean mHideIconLabels;
     private boolean mAutoRotate;
 
     private Runnable mBuildLayersRunnable = new Runnable() {
@@ -298,6 +299,7 @@ public final class Launcher extends Activity
         // Preferences
         mShowSearchBar = PreferencesProvider.Interface.Homescreen.getShowSearchBar(this);
         mShowDockDivider = PreferencesProvider.Interface.Homescreen.Indicator.getShowDockDivider(this);
+        mHideIconLabels = PreferencesProvider.Interface.Homescreen.getHideIconLabels(this);
         mAutoRotate = PreferencesProvider.Interface.General.getAutoRotate(this, getResources().getBoolean(R.bool.config_defaultAutoRotate));
 
         if (PROFILE_STARTUP) {
@@ -605,7 +607,12 @@ public final class Launcher extends Activity
                     if (mFirstTime) {
                         mFirstTime = false;
                     } else {
-                        workspace.post(mBuildLayersRunnable);
+                        // We delay the layer building a bit in order to give
+                        // other message processing a time to run.  In particular
+                        // this avoids a delay in hiding the IME if it was
+                        // currently shown, because doing that may involve
+                        // some communication back with the app.
+                        workspace.postDelayed(mBuildLayersRunnable, 500);
                         observer.removeOnPreDrawListener(this);
                     }
                     return true;
@@ -860,6 +867,9 @@ public final class Launcher extends Activity
     View createShortcut(int layoutResId, ViewGroup parent, ShortcutInfo info) {
         BubbleTextView favorite = (BubbleTextView) mInflater.inflate(layoutResId, parent, false);
         favorite.applyFromShortcutInfo(info, mIconCache);
+        if (mHideIconLabels) {
+            favorite.setTextVisible(false);
+        }
         favorite.setOnClickListener(this);
         return favorite;
     }
@@ -1620,6 +1630,9 @@ public final class Launcher extends Activity
         // Create the view
         FolderIcon newFolder =
             FolderIcon.fromXml(R.layout.folder_icon, this, layout, folderInfo, mIconCache);
+        if (mHideIconLabels) {
+            newFolder.setTextVisible(false);
+        }
         mWorkspace.addInScreen(newFolder, container, screen, cellX, cellY, 1, 1,
                 isWorkspaceLocked());
         return newFolder;
@@ -2905,10 +2918,14 @@ public final class Launcher extends Activity
         // Find the app market activity by resolving an intent.
         // (If multiple app markets are installed, it will return the ResolverActivity.)
         ComponentName activityName = intent.resolveActivity(getPackageManager());
+
+        if (activityName != null) {
+            mAppMarketIntent = intent;
+        }
+
         if (activityName != null && (ViewConfiguration.get(this).hasPermanentMenuKey() ||
                 getResources().getBoolean(R.bool.config_superosr))) {
             int coi = getCurrentOrientationIndexForGlobalIcons();
-            mAppMarketIntent = intent;
             sAppMarketIcon[coi] = updateTextButtonWithIconFromExternalActivity(
                     R.id.market_button, activityName, R.drawable.ic_launcher_market_holo);
             marketButton.setVisibility(View.VISIBLE);
@@ -2948,7 +2965,7 @@ public final class Launcher extends Activity
         Dialog createDialog() {
             mAdapter = new AddAdapter(Launcher.this);
 
-            final AlertDialog.Builder builder = new AlertDialog.Builder(Launcher.this, 
+            final AlertDialog.Builder builder = new AlertDialog.Builder(Launcher.this,
                     AlertDialog.THEME_HOLO_DARK);
             builder.setAdapter(mAdapter, this);
 
@@ -3122,6 +3139,9 @@ public final class Launcher extends Activity
                     FolderIcon newFolder = FolderIcon.fromXml(R.layout.folder_icon, this,
                             (ViewGroup) workspace.getChildAt(workspace.getCurrentPage()),
                             (FolderInfo) item, mIconCache);
+                    if (!mHideIconLabels) {
+                        newFolder.setTextVisible(false);
+                    }
                     workspace.addInScreen(newFolder, item.container, item.screen, item.cellX,
                             item.cellY, 1, 1, false);
                     break;

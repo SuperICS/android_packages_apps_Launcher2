@@ -28,6 +28,7 @@ import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.util.AttributeSet;
+import android.view.HapticFeedbackConstants;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.DecelerateInterpolator;
@@ -37,6 +38,7 @@ public class DeleteDropTarget extends ButtonDropTarget {
     private static final int MODE_DELETE = 0;
     private static final int MODE_UNINSTALL = 1;
     private int mMode = MODE_DELETE;
+
     private static int DELETE_ANIMATION_DURATION = 250;
     private ColorStateList mOriginalTextColor;
     private int mHoverColor = 0xFFFF0000;
@@ -55,8 +57,10 @@ public class DeleteDropTarget extends ButtonDropTarget {
     public DeleteDropTarget(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
     }
+
     private final Runnable mShowUninstaller = new Runnable() {
         public void run() {
+            performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
             switchToUninstallTarget();
         }
     };
@@ -86,6 +90,9 @@ public class DeleteDropTarget extends ButtonDropTarget {
         }
     }
 
+    private boolean isAllAppsItem(DragSource source, Object info) {
+        return isAllAppsApplication(source, info) || isAllAppsWidget(source, info);
+    }
     private boolean isAllAppsApplication(DragSource source, Object info) {
         return (source instanceof AppsCustomizeView) && (info instanceof ApplicationInfo);
     }
@@ -141,7 +148,11 @@ public class DeleteDropTarget extends ButtonDropTarget {
         setTextColor(mOriginalTextColor);
         ((ViewGroup) getParent()).setVisibility(View.VISIBLE);
         if (getText().length() > 0) {
-            setText(R.string.delete_target_label);
+            if (isAllAppsItem(source, info)) {
+                setText(R.string.cancel_target_label);
+            } else {
+                setText(R.string.delete_target_label);
+            }
         }
     }
 
@@ -163,6 +174,7 @@ public class DeleteDropTarget extends ButtonDropTarget {
     @Override
     public void onDragEnd() {
         super.onDragEnd();
+
         mActive = false;
     }
 
@@ -183,11 +195,16 @@ public class DeleteDropTarget extends ButtonDropTarget {
         super.onDragExit(d);
 
         mHandler.removeCallbacks(mShowUninstaller);
+
         if (!d.dragComplete) {
             mMode = MODE_DELETE;
 
             if (getText().length() > 0) {
-                setText(R.string.delete_target_label);
+                if (isAllAppsItem(d.dragSource, d.dragInfo)) {
+                    setText(R.string.cancel_target_label);
+                } else {
+                    setText(R.string.delete_target_label);
+                }
             }
 
             setCompoundDrawablesWithIntrinsicBounds(mRemoveNormalDrawable, null, null, null);
